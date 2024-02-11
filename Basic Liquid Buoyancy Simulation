@@ -1,0 +1,146 @@
+from vpython import *
+
+hollow = box(pos = vector(0,0,0), size = vector(5,12,.01), opacity = 0.1)
+bowl = box(pos = vector(0,0,0), size = vector(22,12,7), opacity = 0.1)
+permeable_layer = box(pos=vector(0,0,0),size = vector(0.2,12,1),opacity=0.1, color=color.green)
+
+xbar = hollow.size.x/2
+ybar = hollow.size.y/2
+zbar = hollow.size.z/2
+
+g1 = graph()
+f1 = gcurve(color=color.red)
+f2 = gcurve(color=color.blue)
+
+#Creating Particles
+n = 0
+N = 40
+bs = []    
+q0 = 1e-4
+
+while n < N:
+    rt = 10 * vector(2*random()-1, 2*random()-1,0)
+    decider = random()
+    if decider < 0.0 and rt.x > permeable_layer.size.x and abs(rt.x) <= xbar and abs(rt.y) <= ybar and abs(rt.z) <= zbar:
+        n += 1
+        bs += [box(pos = rt, size = vector(0.7,0.7,0.7), color = color.red, q = q0 )]
+    elif abs(rt.x) <= xbar and abs(rt.y) <= ybar and abs(rt.z) <= zbar:
+        n += 1
+        bs += [sphere(pos = rt, radius = 0.6, color = color.blue,q = q0)]
+        
+index1 = 0
+extraballs = 30
+extraballs2 = 20
+
+while index1 < extraballs:
+    bs += sphere(pos = vector(2*random()-1, 2*random()-1,0), radius = 0.5, color = color.yellow, q = q0, m = 0.03)
+    bs += sphere(pos = vector(2*random()-1, 2*random()-1,0), radius = 0.4, color = color.green, q = q0, m = 0.01)
+    index1 += 1
+v0 = 0
+def normal(avg, std): #Box-Muller Transform To Create a Normal Distribution
+    u1 = random()
+    u2 = random()
+    vt = sqrt(-2*log(u1)) * cos(2*pi*u2)
+    vt = vt*std + avg
+    return vt
+
+#Initial Conditions
+m = 0.3
+K = 100000
+
+for particle in bs:
+    particle.m = m
+    v = normal(v0, 1)
+    particle.v = v * norm(vector(2*random()-1, 2*random()-1, 2*random()-1))
+    particle.p = particle.v * m
+    particle.F = vector(0,0,0)
+    if particle.radius == 0.5:
+        particle.m = 0.1
+    elif particle.radius == 0.4:
+        particle.m = 0.05
+    particle.radius = particle.radius/1.5
+    
+t = 0
+dt = 0.001
+drag = 800
+E = vector(0,0,0)
+k = 9e9
+g = vector(0,-5000,0)
+  
+while t < 300: 
+    rate(10000)
+    leftcount = 0
+    rightcount = 0
+    
+    for i in range(len(bs)):
+        bs[i].F = -bs[i].p * drag + bs[i].q * E + bs[i].m*g
+        bond = []
+        for j in range(len(bs)):
+            if i != j:
+                rt = bs[j].pos - bs[i].pos
+                if mag(rt) < 1.5:
+                    bs[i].F += k * bs[i].q*bs[j].q*norm(rt)/(mag(rt)**2)
+                    bs[i].F += -3*k * bs[i].q*bs[j].q*norm(rt)/(mag(rt)**3)
+                    
+              
+                
+        bs[i].p += bs[i].F * dt 
+        bs[i].pos += bs[i].p/bs[i].m*dt
+        bs[i].F = vector(0,0,0)
+    
+    for particle in bs:
+        r = particle.pos
+         
+        if r.x > xbar:
+            particle.F += -K*(abs(r.x)-xbar) * vector(1,0,0)
+        if r.x < -xbar:
+            particle.F += K*(abs(r.x)-xbar) * vector(1,0,0)
+        if r.y > ybar:
+            particle.F += -K*(abs(r.y)-ybar) * vector(0,1,0)
+        if r.y < -ybar:
+            particle.F += K*(abs(r.y)-ybar) * vector(0,1,0)
+        if r.z > zbar:
+            particle.F += -K*(abs(r.z)-zbar) * vector(0,0,1)
+        if r.z < -zbar:
+            particle.F += K*(abs(r.z)-zbar) * vector(0,0,1)
+        
+        particle.p += 5*vector(2*random()-1,2*random()-1,2*random()-1)
+        leftcount = 0
+        rightcount = 0
+
+        
+        
+        if particle.size.x == 0.7 and r.x < permeable_layer.size.x:
+            particle.F += -K*(r.x-permeable_layer.size.x) * vector(1,0,0)
+        
+        
+        if particle.pos.x > permeable_layer.size.x:
+            rightcount += 1
+            
+        else:
+            leftcount += 1
+            
+        
+        particle.p += particle.F * dt 
+        particle.pos += particle.p/particle.m*dt
+        
+    f1.plot(t,rightcount)
+    f2.plot(t,leftcount)
+    
+    
+    t += dt
+    
+    
+    """
+    Pt = P(bs,R)
+    Kt = Kavg(bs)
+    T = 2/(3*1.38e-23) * Kt
+    Vt = (2*R)**3
+    
+    #Plotting KE, Pressure, and PV/T against time (last should remain constant)
+    fK.plot(t, Kt)
+    fP.plot(t, Pt)
+    fk.plot(t, Pt*Vt/T)
+    """
+        
+
