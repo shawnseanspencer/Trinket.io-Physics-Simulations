@@ -1,0 +1,39 @@
+from vpython import *
+
+scene = canvas()
+
+#Graph Settings
+g1 = graph(xtitle = 'Time [s]', ytitle = 'mag(E) [N/C]')
+f1 = gcurve()
+
+#Constants
+k = 9e9 #Nm^2/C^2
+K = 10000
+q0 = 3e-7 #C
+m = 0.001 #kg
+R = 0.2 #m
+t = 0 #s
+dt = 0.0001 #s
+drag = 20
+
+#Charge Count Parameters
+n = 0
+N = 26
+qs = []
+E = vector(0,0,0)
+rt = vector(R,R,R)
+#Generating Charges Inside Sphere
+while n <= N:
+  
+    spacing = R
+    qs += sphere(pos = rt, radius = R/20, make_trail = False, oddity = n)
+    rt.x += -spacing 
+    if rt.x < -R :
+        rt.x = R
+        rt.y += -spacing
+    if rt.y < -R:
+        rt.y = R
+        rt.z += -spacing
+    
+    n += 1
+    
