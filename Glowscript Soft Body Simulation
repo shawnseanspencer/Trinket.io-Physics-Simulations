@@ -18,15 +18,14 @@ drag = 20
 
 #Charge Count Parameters
 n = 0
-N = 26
-qs = []
+N = 6
+bs = [] 
 E = vector(0,0,0)
 rt = vector(R,R,R)
 #Generating Charges Inside Sphere
-while n <= N:
-  
-    spacing = R
-    qs += sphere(pos = rt, radius = R/20, make_trail = False, oddity = n)
+while n <= 1.5*N**2 + 9:
+    spacing = (2*R)**(1/3)/N
+    bs += sphere(pos = rt, radius = R/20, make_trail = False)
     rt.x += -spacing 
     if rt.x < -R :
         rt.x = R
@@ -37,3 +36,23 @@ while n <= N:
     
     n += 1
     
+#Creating Springs (idk know how this works, its sloppy but it does lmao)
+springs = []
+rt = []
+for i in range(len(bs)):
+    for j in range(len(bs)):
+        rt[j] = bs[j].pos-bs[i].pos
+        
+        if bs[i].pos.x == bs[j].pos.x and bs[i].pos.z == bs[j].pos.z and mag(rt[j]) < abs(spacing) + 0.01:
+            springs += helix(pos=bs[i].pos,axis = rt[j], radius = R/30)
+        
+        
+        if bs[i].pos.y == bs[j].pos.y and bs[i].pos.z == bs[j].pos.z and mag(rt[j]) < abs(spacing) + 0.01 and j%2 == 0:
+            springs += helix(pos=bs[i].pos,axis = rt[j], radius = R/30)
+        
+        if bs[i].pos.y == bs[j].pos.y and bs[i].pos.x == bs[j].pos.x and mag(rt[j]) < abs(spacing) + 0.01 and -3*rt[i] in rt:
+            springs += helix(pos=bs[i].pos,axis = rt[j], radius = R/30)
+
+        
+      
+      
